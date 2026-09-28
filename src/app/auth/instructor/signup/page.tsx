@@ -3,15 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { signUpInstructor } from '@/lib/auth';
 
 export default function InstructorSignup() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    password: '',
+    confirmPassword: '',
     phone: '',
     subjects: [] as string[],
+    qualifications: '',
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -48,33 +51,32 @@ export default function InstructorSignup() {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setMessage('✗ Passwords do not match.');
+      setLoading(false);
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setMessage('✗ Password must be at least 8 characters.');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
-        .from('instructors')
-        .insert([
-          {
-            name: formData.name,
-            email: formData.email,
-            phone: formData.phone,
-            subjects_taught: formData.subjects,
-            status: 'pending',
-          },
-        ])
-        .select()
-        .single();
+      await signUpInstructor(
+        formData.email,
+        formData.password,
+        formData.name,
+        formData.phone,
+        formData.subjects,
+        formData.qualifications
+      );
 
-      if (error) {
-        setMessage(`✗ Error: ${error.message}`);
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        setMessage('✓ Registration successful! You will receive a confirmation email shortly.');
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
-      }
+      setMessage('✓ Account created! Check your email to confirm.');
+      setTimeout(() => {
+        router.push('/auth/instructor/login');
+      }, 2000);
     } catch (error) {
       setMessage(`✗ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setLoading(false);
@@ -118,7 +120,34 @@ export default function InstructorSignup() {
                 />
               </div>
 
-              <div className="md:col-span-2">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="At least 8 characters"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg bg-white dark:bg-dark-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg bg-white dark:bg-dark-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
                   Phone
                 </label>
@@ -153,6 +182,20 @@ export default function InstructorSignup() {
               )}
             </div>
 
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Qualifications
+              </label>
+              <textarea
+                value={formData.qualifications}
+                onChange={(e) => setFormData({ ...formData, qualifications: e.target.value })}
+                placeholder="Your educational background and teaching experience"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-dark-700 rounded-lg bg-white dark:bg-dark-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                rows={3}
+                required
+              />
+            </div>
+
             {message && (
               <div
                 className={`p-3 rounded-lg text-sm ${
@@ -170,13 +213,13 @@ export default function InstructorSignup() {
               disabled={loading || formData.subjects.length === 0}
               className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold disabled:opacity-50 transition"
             >
-              {loading ? 'Registering...' : 'Register'}
+              {loading ? 'Creating Account...' : 'Create Account'}
             </button>
 
             <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
-              <span>Are you a student?</span>
-              <Link href="/auth/student/signup" className="text-primary-600 hover:text-primary-700 font-semibold">
-                Student Signup →
+              <span>Already have an account?</span>
+              <Link href="/auth/instructor/login" className="text-primary-600 hover:text-primary-700 font-semibold">
+                Sign In →
               </Link>
             </div>
           </form>
