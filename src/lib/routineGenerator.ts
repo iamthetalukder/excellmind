@@ -29,47 +29,63 @@ export interface GeneratedRoutine {
   };
 }
 
+const ALL_SUBJECTS = [
+  'Bengali',
+  'English',
+  'Math',
+  'Higher Math',
+  'Physics',
+  'Chemistry',
+  'Biology',
+  'Social Science',
+  'Islamic Studies',
+];
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const WEAK_SHARE = 0.6; // 60% of study time on weak subjects, 40% on strong
+const MAX_WEAK_SESSION = 120; // weak sessions run up to 2 hours
+const MAX_STRONG_SESSION = 60; // strong sessions stay at 1 hour or less
+const BREAK_MINUTES = 15;
+const DAY_START = 6 * 60; // 6 AM
+const DAY_END = 22 * 60; // 10 PM
+
 export function generateRoutine(
   availableHoursPerDay: number,
   weakSubjects: string[],
   examDate: Date
 ): GeneratedRoutine {
-  // Validation
-  if (availableHoursPerDay <= 0) {
+  const hours = Number(availableHoursPerDay);
+  if (!Number.isFinite(hours) || hours <= 0) {
     throw new Error('Available hours must be greater than 0');
   }
-  if (weakSubjects.length === 0) {
+
+  // Copy (and de-duplicate) so the caller's array is never mutated.
+  const weak = [...new Set(weakSubjects ?? [])];
+  if (weak.length === 0) {
     throw new Error('At least one weak subject must be selected');
   }
 
-  const allSubjects = [
-    'Bengali',
-    'English',
-    'Math',
-    'Higher Math',
-    'Physics',
-    'Chemistry',
-    'Biology',
-    'Social Science',
-    'Islamic Studies',
-  ];
-
-  const strongSubjects = allSubjects.filter(
-    (s) => !weakSubjects.includes(s)
-  );
-
-  if (strongSubjects.length === 0) {
-    // If all 9 are weak, treat first 4 as strong
-    strongSubjects.push(...weakSubjects.slice(0, 4));
+  const strong = ALL_SUBJECTS.filter((s) => !weak.includes(s));
+  if (strong.length === 0) {
+    // Every subject was marked weak. Move the last few over to strong rather than
+    // copying them, so the 60/40 split has two real groups and no subject is in both.
+    const moveCount = Math.max(1, Math.round(weak.length * (1 - WEAK_SHARE)));
+    strong.push(...weak.splice(weak.length - moveCount, moveCount));
   }
 
-  const weakPercent = 0.6;
-  const strongPercent = 0.4;
-  const breakPercent = 0.05; // 5% breaks
+  const dailyMinutes = Math.round(hours * 60);
+  const weakMinutes = Math.round(dailyMinutes * WEAK_SHARE);
+  const strongMinutes = dailyMinutes - weakMinutes;
 
-  const weakMinutesPerDay = availableHoursPerDay * 60 * weakPercent;
-  const strongMinutesPerDay = availableHoursPerDay * 60 * strongPercent;
-  const breakMinutesPerDay = availableHoursPerDay * 60 * breakPercent;
+  // Session lengths are the same every day; only the subjects rotate.
+  const weakSessions = splitIntoSessions(weakMinutes, MAX_WEAK_SESSION);
+  const strongSessions = splitIntoSessions(strongMinutes, MAX_STRONG_SESSION);
+  const order = interleave(weakSessions.length, strongSessions.length);
+
+  // Round-robin cursors carry across days, so every subject is cycled through the week.
+  let weakCursor = 0;
+  let strongCursor = 0;
 
   const now = new Date();
   const daysUntilExam = Math.ceil((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
@@ -77,118 +93,56 @@ export function generateRoutine(
   const routine: DailyRoutine[] = [];
 
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+    // Build the date from local components so `date` and `dayOfWeek` always agree.
+    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayIndex);
     const slots: RoutineSlot[] = [];
-    const date = new Date(now);
-    date.setDate(date.getDate() + dayIndex);
-    const dateString = date.toISOString().split('T')[0];
-    const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+    let clock = DAY_START;
+    let weakIndex = 0;
+    let strongIndex = 0;
 
-    let currentTime = 6 * 60; // 6 AM in minutes
-    let weakTimeUsed = 0;
-    let strongTimeUsed = 0;
-    let breakTimeUsed = 0;
+    for (let i = 0; i < order.length; i++) {
+      const type = order[i];
+      const planned = type === 'weak' ? weakSessions[weakIndex++] : strongSessions[strongIndex++];
+      const duration = Math.min(planned, DAY_END - clock);
+      if (duration <= 0) break;
 
-    // Distribute weak subjects across the day
-    const dayWeakSubjects = weakSubjects.filter((_, i) => i % 7 === dayIndex);
-    for (const subject of dayWeakSubjects) {
-      const slotDuration = Math.min(90, weakMinutesPerDay - weakTimeUsed); // 90 min slots for weak
-      if (slotDuration > 15) {
-        const startTime = timeToString(currentTime);
-        const endTime = timeToString(currentTime + slotDuration);
-        slots.push({
-          subject,
-          startTime,
-          endTime,
-          type: 'weak',
-          durationMinutes: slotDuration,
-        });
-        currentTime += slotDuration;
-        weakTimeUsed += slotDuration;
+      const subject =
+        type === 'weak'
+          ? weak[weakCursor++ % weak.length]
+          : strong[strongCursor++ % strong.length];
 
-        // Add break after slot if more time remains
-        if (weakTimeUsed < weakMinutesPerDay && breakTimeUsed < breakMinutesPerDay) {
-          const breakDuration = Math.min(15, breakMinutesPerDay - breakTimeUsed);
-          slots.push({
-            subject: 'Break',
-            startTime: timeToString(currentTime),
-            endTime: timeToString(currentTime + breakDuration),
-            type: 'break',
-            durationMinutes: breakDuration,
-          });
-          currentTime += breakDuration;
-          breakTimeUsed += breakDuration;
-        }
-      }
-    }
-
-    // Distribute strong subjects
-    const dayStrongSubjects = strongSubjects.filter((_, i) => {
-      const strongCount = strongSubjects.length;
-      return strongCount > 0 ? i % strongCount === dayIndex % strongCount : false;
-    });
-
-    for (const subject of dayStrongSubjects) {
-      const slotDuration = Math.min(60, strongMinutesPerDay - strongTimeUsed); // 60 min slots for strong
-      if (slotDuration > 15) {
-        const startTime = timeToString(currentTime);
-        const endTime = timeToString(currentTime + slotDuration);
-        slots.push({
-          subject,
-          startTime,
-          endTime,
-          type: 'strong',
-          durationMinutes: slotDuration,
-        });
-        currentTime += slotDuration;
-        strongTimeUsed += slotDuration;
-
-        // Add break
-        if (strongTimeUsed < strongMinutesPerDay && breakTimeUsed < breakMinutesPerDay) {
-          const breakDuration = Math.min(15, breakMinutesPerDay - breakTimeUsed);
-          slots.push({
-            subject: 'Break',
-            startTime: timeToString(currentTime),
-            endTime: timeToString(currentTime + breakDuration),
-            type: 'break',
-            durationMinutes: breakDuration,
-          });
-          currentTime += breakDuration;
-          breakTimeUsed += breakDuration;
-        }
-      }
-    }
-
-    // Cap at 10 PM (22:00)
-    const maxTime = 22 * 60;
-    if (currentTime > maxTime) {
-      slots.forEach((slot) => {
-        if (timeToMinutes(slot.endTime) > maxTime) {
-          const overflow = timeToMinutes(slot.endTime) - maxTime;
-          slot.endTime = timeToString(maxTime);
-          slot.durationMinutes -= overflow;
-        }
+      slots.push({
+        subject,
+        startTime: timeToString(clock),
+        endTime: timeToString(clock + duration),
+        type,
+        durationMinutes: duration,
       });
+      clock += duration;
+
+      // A break between every pair of sessions, never after the last one.
+      if (i < order.length - 1 && clock + BREAK_MINUTES < DAY_END) {
+        slots.push({
+          subject: 'Break',
+          startTime: timeToString(clock),
+          endTime: timeToString(clock + BREAK_MINUTES),
+          type: 'break',
+          durationMinutes: BREAK_MINUTES,
+        });
+        clock += BREAK_MINUTES;
+      }
     }
 
-    const totalStudyMinutes = slots
-      .filter((s) => s.type !== 'break')
-      .reduce((sum, s) => sum + s.durationMinutes, 0);
-
-    const weakMinutes = slots
-      .filter((s) => s.type === 'weak')
-      .reduce((sum, s) => sum + s.durationMinutes, 0);
-
-    const strongMinutes = slots
-      .filter((s) => s.type === 'strong')
-      .reduce((sum, s) => sum + s.durationMinutes, 0);
+    const weakDayMinutes = sumMinutes(slots, 'weak');
+    const strongDayMinutes = sumMinutes(slots, 'strong');
 
     routine.push({
-      date: dateString,
-      dayOfWeek,
+      date: formatDate(date),
+      dayOfWeek: DAY_NAMES[date.getDay()],
       slots,
-      totalStudyMinutes,
-      weakSubjectMinutes: weakMinutes,
-      strongSubjectMinutes: strongMinutes,
+      totalStudyMinutes: weakDayMinutes + strongDayMinutes,
+      weakSubjectMinutes: weakDayMinutes,
+      strongSubjectMinutes: strongDayMinutes,
     });
   }
 
@@ -201,7 +155,7 @@ export function generateRoutine(
     batchId: '',
     examDate: examDate.toISOString().split('T')[0],
     daysUntilExam,
-    totalAvailableHours: availableHoursPerDay * 7,
+    totalAvailableHours: hours * 7,
     routine,
     summary: {
       weeklyWeakFocus: totalMinutes > 0 ? Math.round((totalWeakMinutes / totalMinutes) * 100) : 0,
@@ -211,13 +165,35 @@ export function generateRoutine(
   };
 }
 
+// Split `total` minutes into the fewest sessions no longer than `max`, as evenly as possible.
+function splitIntoSessions(total: number, max: number): number[] {
+  if (total <= 0) return [];
+  const count = Math.ceil(total / max);
+  const base = Math.floor(total / count);
+  const remainder = total - base * count;
+  return Array.from({ length: count }, (_, i) => base + (i < remainder ? 1 : 0));
+}
+
+// Alternate weak and strong sessions, starting with weak; any surplus goes at the end.
+function interleave(weakCount: number, strongCount: number): Array<'weak' | 'strong'> {
+  const order: Array<'weak' | 'strong'> = [];
+  for (let i = 0; i < Math.max(weakCount, strongCount); i++) {
+    if (i < weakCount) order.push('weak');
+    if (i < strongCount) order.push('strong');
+  }
+  return order;
+}
+
+function sumMinutes(slots: RoutineSlot[], type: RoutineSlot['type']): number {
+  return slots.filter((s) => s.type === type).reduce((sum, s) => sum + s.durationMinutes, 0);
+}
+
+function formatDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function timeToString(minutes: number): string {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
-}
-
-function timeToMinutes(timeString: string): number {
-  const [hours, mins] = timeString.split(':').map(Number);
-  return hours * 60 + mins;
 }
