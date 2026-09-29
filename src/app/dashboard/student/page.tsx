@@ -72,11 +72,16 @@ export default function StudentDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 dark:from-dark-900 dark:to-dark-950 py-12">
       <div className="max-w-6xl mx-auto px-4">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome, {student.name}</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Exam: SSC 2028 | School: {student.school} | Status: {student.status}
-          </p>
+        <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Welcome, {student.name}</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Exam: SSC 2028 | School: {student.school} | Status: {student.status}
+            </p>
+          </div>
+          <Link href="/dashboard/student/progress" className="text-primary-600 hover:text-primary-700 font-semibold">
+            📊 View Progress
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

@@ -19,6 +19,25 @@ export interface ProgressStats {
   recentSessions: ProgressRecord[];
 }
 
+// Today's date in Bangladesh time (UTC+6, no DST), as YYYY-MM-DD. Session dates are
+// stored this way so a session logged after midnight lands on the student's own day.
+export function dhakaToday(): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Dhaka',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  const part = (type: string) => parts.find((p) => p.type === type)?.value;
+  return `${part('year')}-${part('month')}-${part('day')}`;
+}
+
+// The Bangladesh date `days` days before today, as YYYY-MM-DD.
+function dhakaDaysAgo(days: number): string {
+  const [y, m, d] = dhakaToday().split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d - days)).toISOString().slice(0, 10);
+}
+
 export async function logStudySession(
   studentId: string,
   subject: string,
@@ -31,7 +50,7 @@ export async function logStudySession(
     .insert([
       {
         student_id: studentId,
-        date: new Date().toISOString().split('T')[0],
+        date: dhakaToday(),
         subject,
         duration_minutes: durationMinutes,
         session_type: sessionType,
@@ -49,13 +68,9 @@ export async function getProgressStats(
   studentId: string,
   weakSubjects: string[]
 ): Promise<ProgressStats> {
-  const today = new Date().toISOString().split('T')[0];
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
-  const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  const today = dhakaToday();
+  const weekAgo = dhakaDaysAgo(7);
+  const monthAgo = dhakaDaysAgo(30);
 
   // Fetch all progress records for this student
   const { data: allRecords, error } = await supabase

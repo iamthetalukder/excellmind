@@ -109,9 +109,14 @@ export default function LogSessionPage() {
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 dark:from-dark-900 dark:to-dark-950 py-12">
       <div className="max-w-2xl mx-auto px-4">
         <div className="mb-8">
-          <Link href="/dashboard/student" className="text-primary-600 hover:text-primary-700 font-semibold mb-4 inline-block">
-            ← Back to Dashboard
-          </Link>
+          <div className="flex items-center justify-between mb-4">
+            <Link href="/dashboard/student" className="text-primary-600 hover:text-primary-700 font-semibold">
+              ← Back to Dashboard
+            </Link>
+            <Link href="/dashboard/student/progress" className="text-primary-600 hover:text-primary-700 font-semibold">
+              ← Back to Progress
+            </Link>
+          </div>
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Log Study Session</h1>
           <p className="text-gray-600 dark:text-gray-400">Track your study progress</p>
         </div>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
+import { dhakaToday } from '@/lib/progressHelper';
 import type { DailyRoutine } from '@/lib/routineGenerator';
 
 const WEAK_COLOR = '#3B82F6';
@@ -62,18 +63,6 @@ interface WeekProgress {
   daysRemaining: number;
   days: DayRow[];
   subjects: SubjectRow[];
-}
-
-// Today's date in Bangladesh time (UTC+6, no DST), as YYYY-MM-DD.
-function dhakaToday(): string {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Asia/Dhaka',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).formatToParts(new Date());
-  const part = (type: string) => parts.find((p) => p.type === type)?.value;
-  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 
 // Monday..Sunday of the week containing `today`. The maths runs in UTC so the
