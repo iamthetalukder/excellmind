@@ -1,188 +1,101 @@
-'use client';
-
 import Link from 'next/link';
-import { useState } from 'react';
+import Image from 'next/image';
+
+export const metadata = {
+  title: 'ExcelMind - SSC/HSC Exam Preparation',
+  description: 'AI-powered study routines for Bangladesh SSC and HSC exams',
+};
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'student' | 'instructor'>('student');
-
   return (
-    <div className="bg-gradient-to-b from-primary-50 to-white dark:from-dark-900 dark:to-dark-950">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-4 py-20 text-center">
-        <div className="animate-fade-in">
-          <h1 className="text-6xl font-bold mb-6">
-            <span className="bg-gradient-to-r from-primary-600 to-accent-600 bg-clip-text text-transparent">
-              ExcelMind
-            </span>
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 mb-8 max-w-2xl mx-auto">
-            Personalized exam preparation for Bangladesh SSC & HSC students. AI-generated routines, progress tracking, and teacher dashboards — all aligned with your curriculum.
-          </p>
-
-          <div className="flex gap-4 justify-center mb-16">
-            <Link
-              href="/auth/student/signup"
-              className="px-8 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-semibold transition transform hover:scale-105"
-            >
-              Enroll as Student
-            </Link>
-            <Link
-              href="/auth/instructor/signup"
-              className="px-8 py-3 bg-white dark:bg-dark-800 border-2 border-primary-600 text-primary-600 dark:text-primary-400 rounded-lg font-semibold hover:bg-primary-50 dark:hover:bg-dark-700 transition"
-            >
-              Sign Up as Instructor
-            </Link>
-          </div>
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/logo-mark.png"
+            alt="ExcelMind"
+            width={120}
+            height={120}
+            className="w-24 h-24"
+          />
         </div>
-      </section>
 
-      {/* Features Section */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-16">Why ExcelMind?</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white dark:bg-dark-900 p-8 rounded-xl border border-gray-200 dark:border-dark-800 hover:shadow-lg dark:hover:shadow-2xl transition">
-            <div className="text-4xl mb-4">📚</div>
-            <h3 className="text-xl font-bold mb-3">Personalized Routines</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              AI-generated daily schedules tailored to your available hours and weak subjects based on Sara's proven methodology.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-dark-900 p-8 rounded-xl border border-gray-200 dark:border-dark-800 hover:shadow-lg dark:hover:shadow-2xl transition">
-            <div className="text-4xl mb-4">📊</div>
-            <h3 className="text-xl font-bold mb-3">Real-Time Progress</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Track study hours, weak subject focus, and exam readiness with weekly performance summaries and analytics.
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-dark-900 p-8 rounded-xl border border-gray-200 dark:border-dark-800 hover:shadow-lg dark:hover:shadow-2xl transition">
-            <div className="text-4xl mb-4">👨‍🏫</div>
-            <h3 className="text-xl font-bold mb-3">Teacher Dashboard</h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage multiple students, approve enrollments, generate personalized routines, and monitor progress at scale.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="max-w-7xl mx-auto px-4 py-20 bg-primary-50 dark:bg-dark-900 rounded-2xl my-20">
-        <h2 className="text-4xl font-bold text-center mb-16">How It Works</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { num: '01', title: 'Enroll', desc: 'Sign up and share your details — weak subjects, available hours, and tutor assignments.' },
-            { num: '02', title: 'Generate', desc: 'AI creates your personalized routine based on your profile and weak subjects.' },
-            { num: '03', title: 'Study', desc: 'Follow your routine daily. Track every session and monitor your progress in real time.' },
-            { num: '04', title: 'Succeed', desc: 'Reach exam day fully prepared with data-driven insights and focused study habits.' },
-          ].map((step, i) => (
-            <div key={i} className="text-center">
-              <div className="text-4xl font-bold text-primary-600 mb-3">{step.num}</div>
-              <h3 className="text-lg font-bold mb-2">{step.title}</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-4">Simple, Transparent Pricing</h2>
-        <p className="text-center text-gray-600 dark:text-gray-400 mb-16 max-w-2xl mx-auto">
-          Choose what works for you. All plans include personalized routines and progress tracking.
+        <h1 className="text-5xl font-bold text-slate-900 dark:text-white mb-4">
+          ExcelMind
+        </h1>
+        <p className="text-xl text-slate-600 dark:text-slate-300 mb-2">
+          Think. Learn. Excel.
+        </p>
+        <p className="text-lg text-slate-500 dark:text-slate-400 mb-8">
+          AI-powered study routines for SSC and HSC exam success
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              name: 'Free',
-              price: '0',
-              features: ['Try for free', 'Basic routine', 'Limited progress tracking', 'Community support'],
-              cta: 'Start Free',
-              ctaHref: '/auth/student/signup',
-            },
-            {
-              name: 'Pro',
-              price: '99',
-              features: ['Full AI routines', 'Real-time progress analytics', 'Weekly performance reports', 'Priority support'],
-              cta: 'Upgrade to Pro',
-              ctaHref: '/auth/student/signup',
-              highlight: true,
-            },
-            {
-              name: 'Instructor',
-              price: '299',
-              features: ['Manage up to 50 students', 'Bulk routine generation', 'Student analytics dashboard', 'Dedicated support'],
-              cta: 'Sign Up',
-              ctaHref: '/auth/instructor/signup',
-            },
-          ].map((plan, i) => (
-            <div
-              key={i}
-              className={`relative rounded-xl border p-8 transition transform hover:scale-105 ${
-                plan.highlight
-                  ? 'bg-gradient-to-b from-primary-600 to-primary-700 text-white border-primary-600 shadow-lg'
-                  : 'bg-white dark:bg-dark-900 border-gray-200 dark:border-dark-800'
-              }`}
-            >
-              {plan.highlight && <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-accent-500 text-white px-4 py-1 rounded-full text-sm font-bold">Most Popular</div>}
+        {/* CTA Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <Link
+            href="/auth/student/signup"
+            className="px-8 py-3 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold"
+          >
+            Start as Student
+          </Link>
+          <Link
+            href="/auth/instructor/signup"
+            className="px-8 py-3 border-2 border-teal-600 text-teal-600 dark:text-teal-400 rounded-lg hover:bg-teal-50 dark:hover:bg-teal-900/20 transition font-semibold"
+          >
+            Join as Teacher
+          </Link>
+        </div>
 
-              <h3 className={`text-2xl font-bold mb-2 ${!plan.highlight && 'text-gray-900 dark:text-gray-50'}`}>
-                {plan.name}
-              </h3>
-              <div className="mb-6">
-                <span className={`text-4xl font-bold ${!plan.highlight && 'text-primary-600'}`}>
-                  ৳{plan.price}
-                </span>
-                <span className={`text-sm ${plan.highlight ? 'text-primary-100' : 'text-gray-600 dark:text-gray-400'}`}>
-                  {plan.price === '0' ? 'forever' : '/month'}
-                </span>
-              </div>
+        {/* Features */}
+        <div className="grid md:grid-cols-3 gap-8 mt-16">
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
+            <div className="text-3xl mb-3">📅</div>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+              Personalized Routines
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              7-day study schedules tailored to your weak subjects
+            </p>
+          </div>
 
-              <ul className="mb-8 space-y-3">
-                {plan.features.map((feature, j) => (
-                  <li key={j} className="flex items-start gap-2">
-                    <span className="text-accent-500 font-bold mt-1">✓</span>
-                    <span className={!plan.highlight ? 'text-gray-600 dark:text-gray-400' : ''}>
-                      {feature}
-                    </span>
-                  </li>
-                ))}
-              </ul>
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
+            <div className="text-3xl mb-3">📊</div>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+              Track Progress
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Log study sessions and watch your progress toward exam day
+            </p>
+          </div>
 
-              <Link
-                href={plan.ctaHref}
-                className={`block text-center py-2 px-4 rounded-lg font-semibold transition ${
-                  plan.highlight
-                    ? 'bg-white text-primary-600 hover:bg-gray-100'
-                    : 'bg-primary-600 text-white hover:bg-primary-700'
-                }`}
-              >
-                {plan.cta}
-              </Link>
-            </div>
-          ))}
+          <div className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow">
+            <div className="text-3xl mb-3">🎯</div>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+              Stay Focused
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              60% focus on weak subjects, 40% review of strong ones
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Curriculum Section */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-center mb-12">Bangladesh SSC & HSC Curriculum</h2>
-
-        <div className="bg-white dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-800 p-12">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {['Bengali', 'English', 'Math', 'Higher Math', 'Physics', 'Chemistry', 'Biology', 'Social Science', 'Islamic Studies'].map((subject) => (
-              <div key={subject} className="p-4 bg-gray-50 dark:bg-dark-800 rounded-lg text-center font-semibold">
-                {subject}
-              </div>
-            ))}
-          </div>
-          <p className="text-center text-gray-600 dark:text-gray-400 mt-8">
-            All materials aligned with official Bangladesh Education Board curriculum and exam patterns.
+      {/* Exam Info */}
+      <section className="bg-white dark:bg-slate-800 py-12 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+            Ready for SSC 2028?
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            Exam date: March 1, 2028 — Start your routine today.
           </p>
+          <Link
+            href="/auth/student/signup"
+            className="inline-block px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold"
+          >
+            Get Started
+          </Link>
         </div>
       </section>
     </div>

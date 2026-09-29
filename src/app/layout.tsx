@@ -11,8 +11,12 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'ExcelMind - Bangladesh Education SaaS',
-  description: 'Personalized SSC/HSC exam preparation platform for Bangladesh students',
+  title: 'ExcelMind - SSC/HSC Exam Preparation',
+  description: 'AI-powered study routines for Bangladesh SSC and HSC exams',
+  icons: {
+    icon: '/favicon.ico',
+    apple: '/apple-touch-icon.png',
+  },
 };
 
 export default function RootLayout({

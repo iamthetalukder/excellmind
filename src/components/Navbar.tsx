@@ -1,88 +1,97 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { signOut } from '@/lib/auth';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isDark, setIsDark] = useState(false);
   const router = useRouter();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [theme, setTheme] = useState('light');
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme') || 'light';
-    setTheme(savedTheme);
-    // Apply the stored theme on mount, otherwise state and the `dark` class drift apart.
-    document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+    // Restore the saved theme and apply it, so the toggle and the page agree on load.
+    const dark = localStorage.getItem('theme') === 'dark';
+    setIsDark(dark);
+    document.documentElement.classList.toggle('dark', dark);
 
-    // Listen to auth state changes
-    const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsLoggedIn(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
     });
 
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
+    return () => subscription?.unsubscribe();
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
-    // Set explicitly from newTheme rather than flipping whatever class is present.
-    document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    const dark = !isDark;
+    setIsDark(dark);
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    document.documentElement.classList.toggle('dark', dark);
   };
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      setIsLoggedIn(false);
-      router.push('/');
-    } catch (error) {
-      console.error('Sign out failed:', error);
-    }
+    await supabase.auth.signOut();
+    router.push('/');
   };
 
   return (
-    <nav className="bg-white dark:bg-dark-900 shadow-md border-b border-gray-200 dark:border-dark-800">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-          ExcelMind
-        </Link>
+    <nav className="bg-white dark:bg-slate-900 shadow-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo + Text */}
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition">
+            <Image
+              src="/images/logo-mark.png"
+              alt="ExcelMind"
+              width={40}
+              height={40}
+              className="w-10 h-10"
+            />
+            <span className="text-xl font-bold text-slate-900 dark:text-white">ExcelMind</span>
+          </Link>
 
-        <div className="flex items-center gap-6">
-          {isLoggedIn && (
-            <div className="flex items-center gap-4">
-              <Link href="/dashboard/student" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 font-medium">
-                Dashboard
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition"
-              >
-                Sign Out
-              </button>
-            </div>
-          )}
-          {!isLoggedIn && (
-            <div className="flex items-center gap-4">
-              <Link href="/auth/student/signup" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 font-medium">
-                Enroll
-              </Link>
-              <Link href="/auth/instructor/signup" className="text-gray-700 dark:text-gray-300 hover:text-primary-600 font-medium">
-                Teach
-              </Link>
-            </div>
-          )}
+          {/* Right Side: Theme + Auth */}
+          <div className="flex items-center gap-4">
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
+              aria-label="Toggle theme"
+            >
+              {isDark ? '☀️' : '🌙'}
+            </button>
 
-          <button
-            onClick={toggleTheme}
-            className="px-3 py-1 bg-gray-200 dark:bg-dark-800 text-gray-800 dark:text-gray-200 rounded-lg transition"
-          >
-            {theme === 'light' ? '🌙' : '☀️'}
-          </button>
+            {/* Auth Buttons */}
+            {user ? (
+              <>
+                <span className="text-sm text-slate-600 dark:text-slate-300">{user.email}</span>
+                <button
+                  onClick={handleSignOut}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition text-sm"
+                >
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/auth/student/login"
+                  className="px-4 py-2 text-slate-900 dark:text-white hover:text-slate-600 text-sm"
+                >
+                  Student Login
+                </Link>
+                <Link
+                  href="/auth/instructor/login"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                >
+                  Instructor Login
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
