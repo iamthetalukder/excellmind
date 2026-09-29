@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { getCurrentUser } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
-import { dhakaToday } from '@/lib/progressHelper';
+import { dhakaToday } from '@/lib/dates';
 import type { DailyRoutine } from '@/lib/routineGenerator';
 
 const WEAK_COLOR = '#3B82F6';

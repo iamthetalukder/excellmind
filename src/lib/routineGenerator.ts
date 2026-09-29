@@ -1,3 +1,5 @@
+import { addDays, daysBetween, dhakaToday, weekdayName } from './dates';
+
 export interface RoutineSlot {
   subject: string;
   startTime: string;
@@ -40,8 +42,6 @@ const ALL_SUBJECTS = [
   'Social Science',
   'Islamic Studies',
 ];
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const WEAK_SHARE = 0.6; // 60% of study time on weak subjects, 40% on strong
 const MAX_WEAK_SESSION = 120; // weak sessions run up to 2 hours
@@ -87,14 +87,16 @@ export function generateRoutine(
   let weakCursor = 0;
   let strongCursor = 0;
 
-  const now = new Date();
-  const daysUntilExam = Math.ceil((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  // Dates follow the student's calendar (Bangladesh), not the server's clock, which runs on
+  // UTC on Vercel and is still on the previous day between midnight and 6 AM in Dhaka.
+  const today = dhakaToday();
+  const examDay = examDate.toISOString().slice(0, 10);
+  const daysUntilExam = daysBetween(today, examDay);
 
   const routine: DailyRoutine[] = [];
 
   for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-    // Build the date from local components so `date` and `dayOfWeek` always agree.
-    const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + dayIndex);
+    const date = addDays(today, dayIndex);
     const slots: RoutineSlot[] = [];
     let clock = DAY_START;
     let weakIndex = 0;
@@ -137,8 +139,8 @@ export function generateRoutine(
     const strongDayMinutes = sumMinutes(slots, 'strong');
 
     routine.push({
-      date: formatDate(date),
-      dayOfWeek: DAY_NAMES[date.getDay()],
+      date,
+      dayOfWeek: weekdayName(date),
       slots,
       totalStudyMinutes: weakDayMinutes + strongDayMinutes,
       weakSubjectMinutes: weakDayMinutes,
@@ -153,7 +155,7 @@ export function generateRoutine(
   return {
     studentId: '',
     batchId: '',
-    examDate: examDate.toISOString().split('T')[0],
+    examDate: examDay,
     daysUntilExam,
     totalAvailableHours: hours * 7,
     routine,
@@ -186,10 +188,6 @@ function interleave(weakCount: number, strongCount: number): Array<'weak' | 'str
 
 function sumMinutes(slots: RoutineSlot[], type: RoutineSlot['type']): number {
   return slots.filter((s) => s.type === type).reduce((sum, s) => sum + s.durationMinutes, 0);
-}
-
-function formatDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function timeToString(minutes: number): string {
